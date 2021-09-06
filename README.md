@@ -5,6 +5,8 @@ This container will set up an IKEv2 VPN server using StrongSwan with a Let's Enc
 
 It will also generate a macOS/iOS .mobileconfig file with on-demand connection enabled by default.
 
+If you're behind a NAT (e.g. a home router), you will need to forward ports 80/tcp, 4500/udp and 500/udp
+
 #### Example docker-compose.yml file
 ```
 version: '3'
