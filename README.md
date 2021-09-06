@@ -27,6 +27,7 @@ services:
       - /docker-persistent-data/ikev2/config:/config
       - /docker-persistent-data/ikev2/letsencrypt:/etc/letsencrypt
     environment:
+      - DNS_SERVERS="1.1.1.1,1.0.0.1" # Optional, defaults to 1.1.1.1
       - VPNHOST=vpn.example.com
       - EMAILADDR=example@mail.com
       - VPNUSERNAME=example

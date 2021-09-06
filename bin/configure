@@ -5,7 +5,7 @@ function exit_badly {
 }
 
 VPNIPPOOL="10.8.0.0/16"
-VPNDNS="1.1.1.1,1.0.0.1"
+VPNDNS=${DNS_SERVERS:-"1.1.1.1,1.0.0.1"}
 ETH0ORSIMILAR="eth0"
 
 IP=$(dig -4 +short myip.opendns.com @resolver1.opendns.com)
