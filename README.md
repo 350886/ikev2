@@ -3,7 +3,7 @@ A Docker-ized version of [jawj/IKEV2-setup](https://github.com/jawj/IKEv2-setup)
 
 This container will set up an IKEv2 VPN server using StrongSwan with a Let's Encrypt certificate and the CNSA/RFC 6379 Suite B cipher.
 
-It will also generate a macOS/iOS .mobileconfig file with on-demand connection enabled by default.
+It will also generate a macOS/iOS .mobileconfig file with optional on-demand connection on specified WiFi networks.
 
 If you're behind a NAT (e.g. a home router), you will need to forward ports 80/tcp, 4500/udp and 500/udp
 
