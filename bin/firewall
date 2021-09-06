@@ -25,6 +25,3 @@ iptables -t nat -A POSTROUTING -s 10.8.0.0/16 -o eth0 -j MASQUERADE
 
 iptables -t mangle -A FORWARD --match policy --pol ipsec --dir in -s 10.8.0.0/16 -o eth0 -p tcp -m tcp --tcp-flags SYN,RST SYN -m tcpmss --mss 1361:1536 -j TCPMSS --set-mss 1360
 
-iptables -A INPUT -j DROP
-iptables -A FORWARD -j DROP
-
