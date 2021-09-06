@@ -13,12 +13,15 @@ version: '3'
 services:
 
   ikev2-vpn:
+    build: .
     container_name: ikev2
     image: notthebee/ikev2
     ports:
       - 4500:4500/udp
       - 500:500/udp
-      - 80:80/tcp # only needed during the first run for Let's Encrypt certificates, feel free to remove it afterwards
+      - 80:80/tcp 
+      # Port 80 is only needed during the first run for
+      # Let's Encrypt certs, feel free to remove it afterwards
     privileged: yes
     volumes:
       - /docker-persistent-data/ikev2/config:/config
@@ -28,6 +31,12 @@ services:
       - EMAILADDR=example@mail.com
       - VPNUSERNAME=example
       - VPNPASSWORD=example
+      # Pick one of the following if you want the VPN
+      # to connect automatically on certain WiFi networks
+      - INCLUDE_SSIDS="SSID1, SSID2"
+      # or to connect on all WiFi networks except for these
+      - EXCLUDE_SSIDS="SSID1, SSID2"
+      # ...or nothing at all
 ```
 
 All credits go to [jawj](https://github.com/jawj) and [cschlosser](https://github.com/cschlosser)

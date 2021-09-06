@@ -135,11 +135,5 @@ ${VPNUSERNAME} : EAP \"${VPNPASSWORD}\"
 
 ln -f -s /etc/ssl/certs/DST_Root_CA_X3.pem /etc/ipsec.d/cacerts/
 
-grep -Fq 'jawj/IKEv2-setup' /etc/ipsec.secrets || echo "
-# https://github.com/jawj/IKEv2-setup
-\${VPNUSERNAME} : EAP \"\${VPNPASSWORD}\"
-" >> /etc/ipsec.secrets
-
-
 genconfig
 firewall

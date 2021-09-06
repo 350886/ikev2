@@ -3,6 +3,18 @@ echo
 echo "--- Generating the mobileconfig file ---"
 echo
 
+if [[ ! -z "${EXCLUDE_SSIDS}" ]]; then
+  mode="exclude"
+  a=$(echo "${EXCLUDE_SSIDS}" | tr -d '"')
+  IFS+=', ' read -r -a ssids <<< $a
+elif [[ ! -z ${INCLUDE_SSIDS} ]]; then
+  mode="include"
+  a=$(echo "${INCLUDE_SSIDS}" | tr -d '"')
+  IFS+=', ' read -r -a ssids <<< $a
+else
+  :
+fi
+
 cd "/config"
 
 cat << EOF > ${VPNHOST}.mobileconfig
@@ -51,14 +63,54 @@ cat << EOF > ${VPNHOST}.mobileconfig
           <key>LifeTimeInMinutes</key>
           <integer>1440</integer>
         </dict>
+EOF
+if [[ ! -z $mode ]]; then
+	cat << EOF >> ${VPNHOST}.mobileconfig       
         <key>OnDemandEnabled</key>
         <integer>1</integer>
         <key>OnDemandRules</key>
         <array>
           <dict>
-            <key>Action</key>
-            <string>Connect</string>
+        <key>Action</key>
+EOF
+
+  if [[ $mode == "include" ]]; then
+    echo "<string>Connect</string>" >> ${VPNHOST}.mobileconfig
+  elif [[ $mode == "exclude" ]]; then
+    echo "<string>Disconnect</string>" >> ${VPNHOST}.mobileconfig
+  else
+    :
+  fi
+
+cat << EOF >> ${VPNHOST}.mobileconfig
+      <key>InterfaceTypeMatch</key>
+      <string>WiFi</string>
+      <key>SSIDMatch</key>
+      <array>
+EOF
+  for i in ${ssids[@]}
+    do 
+      echo "<string>$i</string>" >> ${VPNHOST}.mobileconfig
+    done
+cat << EOF >> ${VPNHOST}.mobileconfig
+          </array>
           </dict>
+
+EOF
+if [[ $mode == "exclude" ]]; then
+cat << EOF >> ${VPNHOST}.mobileconfig
+          <dict>
+              <key>Action</key>
+              <string>Connect</string>
+              <key>InterfaceTypeMatch</key>
+              <string>WiFi</string>
+              </dict>
+EOF
+else
+  :
+fi
+fi
+cat << EOF >> ${VPNHOST}.mobileconfig
         </array>
         <key>RemoteAddress</key>
         <string>${VPNHOST}</string>
