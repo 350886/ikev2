@@ -1,0 +1,5 @@
+#!/bin/bash
+configure
+
+echo "Bringing up VPN ..."
+ipsec start --nofork --debug --conf /etc/ipsec.conf

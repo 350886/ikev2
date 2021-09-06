@@ -1,0 +1,146 @@
+#!/bin/bash
+function exit_badly {
+  echo "$1"
+  exit 1
+}
+
+VPNIPPOOL="10.8.0.0/16"
+VPNDNS="1.1.1.1,1.0.0.1"
+ETH0ORSIMILAR="eth0"
+
+IP=$(dig -4 +short myip.opendns.com @resolver1.opendns.com)
+
+echo "External IP: ${IP}"
+echo "Hostname for the VPN: ${VPNHOST}"
+echo
+echo "** Note: this hostname must already resolve to this machine, to enable Let's Encrypt certificate setup **"
+echo 
+
+VPNHOSTIP=$(dig -4 +short "${VPNHOST}")
+[[ -n "$VPNHOSTIP" ]] || exit_badly "Cannot resolve VPN hostname: aborting"
+
+if [[ "${IP}" != "${VPNHOSTIP}" ]]; then
+  echo "Warning: ${VPNHOST} resolves to ${VPNHOSTIP}, not ${IP}"
+  echo "Either you're behind NAT, or something is wrong (e.g. hostname points to wrong IP, CloudFlare proxying shenanigans, ...)"
+fi
+
+echo
+echo "--- Configuring certificates ---"
+echo
+
+mkdir -p /etc/letsencrypt
+
+if [[ -f /etc/letsencrypt/cli.ini ]]; then
+	echo "Config file already exists, skipping"
+else
+	echo "--- Obtaining the letsencrypt certificate ---"
+	echo "** Make sure that port 80 is forwarded on this docker container (you can remove the forwarding after the certificate has been obtained)  **"
+	echo 'rsa-key-size = 4096
+	renew-hook = /usr/sbin/ipsec reload && /usr/sbin/ipsec secrets
+	' > /etc/letsencrypt/cli.ini
+fi
+
+if [[ -d /etc/letsencrypt/live/${VPNHOST} ]]; then
+	echo "Certificates already exist, skipping"
+else
+	certbot certonly --non-interactive --agree-tos --standalone --preferred-challenges http --email "${EMAILADDR}" -d "${VPNHOST}"
+fi
+
+echo
+echo "--- Copying certificates ---"
+echo
+
+cp "/etc/letsencrypt/live/${VPNHOST}/cert.pem"    /etc/ipsec.d/certs/cert.pem
+cp "/etc/letsencrypt/live/${VPNHOST}/privkey.pem" /etc/ipsec.d/private/privkey.pem
+cp "/etc/letsencrypt/live/${VPNHOST}/chain.pem"   /etc/ipsec.d/cacerts/chain.pem
+
+echo
+echo "--- Configuring sysctls ---"
+echo
+
+grep -Fq 'jawj/IKEv2-setup' /etc/sysctl.conf || echo "
+# https://github.com/jawj/IKEv2-setup
+net.ipv4.ip_forward = 1
+net.ipv4.ip_no_pmtu_disc = 1
+net.ipv4.conf.all.rp_filter = 1
+net.ipv4.conf.all.accept_redirects = 0
+net.ipv4.conf.all.send_redirects = 0
+net.ipv6.conf.all.disable_ipv6 = 1
+net.ipv6.conf.default.disable_ipv6 = 1
+net.ipv6.conf.lo.disable_ipv6 = 1
+net.ipv6.conf.${ETH0ORSIMILAR}.disable_ipv6 = 1
+" >> /etc/sysctl.conf
+
+sysctl -p
+
+echo
+echo "--- Adding the connection to ipsec.conf ---"
+echo
+
+echo "config setup
+	strictcrlpolicy=yes
+	uniqueids=never
+	charondebug=2
+conn roadwarrior
+	auto=add
+	compress=no
+	type=tunnel
+	keyexchange=ikev2
+	fragmentation=yes
+	forceencaps=yes
+	# CNSA/RFC 6379 Suite B (https://wiki.strongswan.org/projects/strongswan/wiki/IKEv2CipherSuites)
+	ike=aes256gcm16-prfsha384-ecp384!
+	esp=aes256gcm16-ecp384!
+	dpdaction=clear
+	dpddelay=900s
+	rekey=no
+	left=%any
+	leftid=@${VPNHOST}
+	leftcert=cert.pem
+	leftsendcert=always
+	leftsubnet=0.0.0.0/0
+	right=%any
+	rightid=%any
+	rightauth=eap-mschapv2
+	eap_identity=%any
+	rightdns=${VPNDNS}
+	rightsourceip=${VPNIPPOOL}
+	rightsendcert=never
+conn ikev2vpn
+	auto=start 
+	ikelifetime=60m
+	keylife=20m
+	rekeymargin=3m
+	keyingtries=1
+	keyexchange=ikev2
+	ike=aes256gcm16-prfsha384-ecp384!
+	esp=aes256gcm16-ecp384!
+	leftsourceip=%config
+	leftauth=eap-mschapv2
+	eap_identity=${VPNUSERNAME}
+	right=${VPNHOST}
+	rightauth=pubkey
+	rightid=@${VPNHOST}
+	rightsubnet=0.0.0.0/0
+	" > /config/ipsec.conf
+fi
+
+echo
+echo "--- Copying the ipsec.conf ---"
+echo
+cp /config/ipsec.conf /etc/ipsec.conf
+
+echo "${VPNHOST} : RSA \"privkey.pem\"
+${VPNUSERNAME} : EAP \"${VPNPASSWORD}\"
+" > /etc/ipsec.secrets
+
+ln -f -s /etc/ssl/certs/DST_Root_CA_X3.pem /etc/ipsec.d/cacerts/
+
+grep -Fq 'jawj/IKEv2-setup' /etc/ipsec.secrets || echo "
+# https://github.com/jawj/IKEv2-setup
+\${VPNUSERNAME} : EAP \"\${VPNPASSWORD}\"
+" >> /etc/ipsec.secrets
+
+
+genconfig
+firewall
