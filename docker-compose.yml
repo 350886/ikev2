@@ -2,7 +2,6 @@ version: '3'
 services:
 
   ikev2-vpn:
-    build: .
     container_name: ikev2
     image: notthebee/ikev2
     ports:
