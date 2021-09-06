@@ -123,7 +123,6 @@ conn ikev2vpn
 	rightid=@${VPNHOST}
 	rightsubnet=0.0.0.0/0
 	" > /config/ipsec.conf
-fi
 
 echo
 echo "--- Copying the ipsec.conf ---"
