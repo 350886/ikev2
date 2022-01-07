@@ -11,6 +11,6 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 ADD ./bin/* /usr/bin/
-ADD ./conf/charon-logging.conf /etc/strongwan.d/charon-logging.conf
+ADD ./conf/charon-logging.conf /etc/strongswan.d/charon-logging.conf
 
 ENTRYPOINT /usr/bin/run
