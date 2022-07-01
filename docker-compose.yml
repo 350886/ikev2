@@ -15,7 +15,7 @@ services:
       - /docker-persistent-data/ikev2/config:/config
       - /docker-persistent-data/ikev2/letsencrypt:/etc/letsencrypt
     environment:
-      - DNS_SERVERS="1.1.1.1, 1.0.0.1"
+      - DNS_SERVERS="223.5.5.5, 223.6.6.6"
       - VPNHOST=www.350886.fun
       - EMAILADDR=350886@qq.com
       - VPNUSERNAME=guo
