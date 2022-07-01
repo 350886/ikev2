@@ -5,9 +5,9 @@ services:
     container_name: ikev2
     image: notthebee/ikev2
     ports:
-      - 4500:4500/udp
-      - 500:500/udp
-      - 80:80/tcp 
+      - 5558:4500/udp
+      - 5559:500/udp
+      - 5557:80/tcp 
       # Only needed during the first run for Let's Encrypt 
       # certificates, feel free to remove it afterwards
     privileged: yes
@@ -16,10 +16,10 @@ services:
       - /docker-persistent-data/ikev2/letsencrypt:/etc/letsencrypt
     environment:
       - DNS_SERVERS="1.1.1.1, 1.0.0.1"
-      - VPNHOST=vpn.example.com
-      - EMAILADDR=example@mail.com
-      - VPNUSERNAME=example
-      - VPNPASSWORD=example
+      - VPNHOST=www.350886.fun
+      - EMAILADDR=350886@qq.com
+      - VPNUSERNAME=guo
+      - VPNPASSWORD=Huang*/881628
       # Pick one of the following if you want the VPN
       # to connect automatically on certain WiFi networks
       - INCLUDE_SSIDS="SSID1, SSID2"
